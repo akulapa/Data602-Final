@@ -5,6 +5,7 @@
 
 import pickle
 import pandas as pd
+import numpy as np
 
 def loadModel():
     pickleFile = 'C:\\Users\\ikats\\OneDrive\\Documents\\GitHub\\data602-final\\model-design\\model.pickle'
@@ -18,7 +19,14 @@ def loadBaseFeatures():
     return features
 
 def getPrediction(model, features, homeTeamID, awayTeamID, season='2015/2016'):
-    '''Get a predicted outcome for given model and features of home and away teams.'''
+    '''
+    Get a predicted outcome for given model and features of home and away teams.
+    Returns: 
+        - Outcome - 1-Home Win, 2-Draw, 3-Home Loss - single value
+        - Associated probabilities - numpy array
+        - Associated features - pandas data frame
+    Return 0 for outcome if features are not available.
+    '''
     homeFeatures = features[(features.team_id==homeTeamID) & (features.season==season) & (features.category=='home')]
     awayFeatures = features[(features.team_id==awayTeamID) & (features.season==season) & (features.category=='away')]
     allFeatures = pd.DataFrame(columns=['home_api_team_id', 'away_api_team_id', 'season', 
@@ -32,7 +40,7 @@ def getPrediction(model, features, homeTeamID, awayTeamID, season='2015/2016'):
                                         'home_aggression', 'away_aggression', 
                                         'home_team_width', 'away_team_width'])
     if len(homeFeatures)!=1 or len(awayFeatures)!=1:
-        return 0.0, allFeatures
+        return 0.0, np.array([33.3333, 33.3333, 33.3333]), allFeatures
     homeFeatures.columns = ['home_api_team_id', 'season', 'category', 
                             'home_ranking', 'home_goalie_ranking', 
                             'home_players', 'home_goalie', 
@@ -66,19 +74,23 @@ def getPrediction(model, features, homeTeamID, awayTeamID, season='2015/2016'):
                                  'home_aggression', 'away_aggression', 
                                  'home_team_width', 'away_team_width']]
     outcome = model.predict(modelFeatures)
-    return outcome[0], allFeatures
+    probs = model.predict_proba(modelFeatures)
+    return outcome[0], probs[0], allFeatures
 
 # Initialization (import model and base data)
 model = loadModel()
 features = loadBaseFeatures()
 # Example call
-outcome, matchFeatures = getPrediction(model, features, 
+outcome, outcome_prob, matchFeatures = getPrediction(model, features, 
                                   homeTeamID=158085, awayTeamID=274581,
                                   season='2015/2016')
 print('Predicted Outcome: ', outcome) # 1-Home Win, 2-Draw, 3-Home Loss
 if outcome==0:
     print('Team features are not available. Cannot run prediction.')
 else:
+    print('Probability of Home Win : ', outcome_prob[0])
+    print('Probability of Draw     : ', outcome_prob[1])
+    print('Probability of Home Loss: ', outcome_prob[2])
     print('Season: ', matchFeatures.season.values[0])
     print('Home Goalie: ',   matchFeatures.home_goalie.values[0])
     print('Home Players: ',  matchFeatures.home_players.values[0])
