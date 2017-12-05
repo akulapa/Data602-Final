@@ -13,6 +13,55 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn import tree
 
+def getHomeFeatures(teamID, season, baseDf):
+    '''Returns one entry corresponding to representative home features of a team in a season.'''
+    allMatches = baseDf[(baseDf.home_team_api_id==teamID) & (baseDf.season==season)]
+    lastMatch = allMatches.sort_values(by = 'date', ascending = False)[:1]
+    matchCount = len(allMatches)
+    if matchCount==0:
+        return []
+    lastMatch['home_prev'] = lastMatch['result']
+    wins = len(allMatches[allMatches.result==1.0])
+    lastMatch['home_win_rate'] = (wins/matchCount)*100
+    lastMatch['home_play_passing'] = sum(allMatches.home_play_passing)/matchCount
+    lastMatch['home_aggression'] = sum(allMatches.home_aggression)/matchCount
+    lastMatch['home_team_width'] = sum(allMatches.home_team_width)/matchCount
+    lastMatch['category'] = 'home'
+    lastMatch = lastMatch[['home_team_api_id', 'season', 'category', 
+                           'home_ranking', 'home_goalie_ranking', 
+                           'home_players', 'home_goalie', 
+                           'home_prev', 'home_win_rate', 
+                           'home_play_passing', 'home_aggression', 'home_team_width']]
+    lastMatch.columns = ['team_id', 'season', 'category', 
+                         'ranking', 'goalie_ranking', 'players', 'goalie', 
+                         'prev', 'win_rate', 'play_passing', 'aggression', 'team_width']
+    return lastMatch
+
+def getAwayFeatures(teamID, season, baseDf):
+    '''Returns one entry corresponding to representative away features of a team in a season.'''
+    allMatches = baseDf[(baseDf.away_team_api_id==teamID) & (baseDf.season==season)]
+    lastMatch = allMatches.sort_values(by = 'date', ascending = False)[:1]
+    matchCount = len(allMatches)
+    if matchCount==0:
+        return []
+    lastMatch['away_prev'] = lastMatch['result']
+    wins = len(allMatches[allMatches.result==1.0])
+    lastMatch['away_win_rate'] = (wins/matchCount)*100
+    lastMatch['away_play_passing'] = sum(allMatches.away_play_passing)/matchCount
+    lastMatch['away_aggression'] = sum(allMatches.away_aggression)/matchCount
+    lastMatch['away_team_width'] = sum(allMatches.away_team_width)/matchCount
+    lastMatch['category'] = 'away'
+    lastMatch = lastMatch[['away_team_api_id', 'season', 'category', 
+                           'away_ranking', 'away_goalie_ranking', 
+                           'away_players', 'away_goalie', 
+                           'away_prev', 'away_win_rate', 
+                           'away_play_passing', 'away_aggression', 'away_team_width']]
+    lastMatch.columns = ['team_id', 'season', 'category', 
+                         'ranking', 'goalie_ranking', 'players', 'goalie', 
+                         'prev', 'win_rate', 'play_passing', 'aggression', 'team_width']
+    return lastMatch
+    
+
 def getHomeWinPCT(teamID, season, matchDf):
     '''Returns home match winning percentage for previous season.'''
     if season=='2008/2009':
@@ -256,3 +305,57 @@ clf.fit(X_train, y_train)
 accuracy = clf.score(X_test, y_test)
 
 print(accuracy)
+
+
+# --------------------------------------------------------------------
+# OPTIMIZE DATA FOR APP
+# --------------------------------------------------------------------
+matchDf['home_goalie'] = matchDf['home_player_1'].astype(int)
+matchDf['away_goalie'] = matchDf['away_player_1'].astype(int)
+matchDf['home_players'] = matchDf.apply (lambda row: formatHomePlayers(row), axis=1)
+matchDf['away_players'] = matchDf.apply (lambda row: formatAwayPlayers(row), axis=1)
+
+# Data frame for manipulation
+baseDf = matchDf[['season', 'home_team_api_id', 'away_team_api_id', 'date', 
+                  'home_goalie', 'away_goalie',
+                  'home_players', 'away_players', 
+                  'home_ranking', 'away_ranking',
+                  'home_goalie_ranking', 'away_goalie_ranking', 
+                  'home_prev', 'away_prev', 
+                  'home_win_rate', 'away_win_rate',
+                  'home_play_passing',  'away_play_passing',  
+                  'home_aggression', 'away_aggression', 
+                  'home_team_width', 'away_team_width', 
+                  'result']]
+baseDf = baseDf.dropna()
+
+#baseDf['baseFlag'] = ''
+
+# List of available teams
+homeTeams = baseDf['home_team_api_id'].unique()
+awayTeams = baseDf['away_team_api_id'].unique()
+allTeams = np.unique(np.concatenate([homeTeams, awayTeams]))
+
+# Features to save
+features = pd.DataFrame(columns=['team_id', 'season', 'category', 
+                                 'ranking', 'goalie_ranking', 
+                                 'players', 'goalie', 
+                                 'prev', 'win_rate', 
+                                 'play_passing', 'aggression', 'team_width'])
+
+# Loop through teams and season
+for team in allTeams: 
+    for season in baseDf.season.unique():
+        teamFeatures = getHomeFeatures(team, season, baseDf) 
+        if len(teamFeatures) > 0:
+            features = pd.concat([features, teamFeatures])
+        teamFeatures = getAwayFeatures(team, season, baseDf) 
+        if len(teamFeatures) > 0:
+            features = pd.concat([features, teamFeatures])
+
+# Save for app use
+features.to_pickle('features.pickle')
+
+# Test
+savedFeatures = pd.read_pickle('features.pickle')
+print(len(savedFeatures))
