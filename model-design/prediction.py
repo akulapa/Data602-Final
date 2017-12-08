@@ -82,7 +82,7 @@ model = loadModel()
 features = loadBaseFeatures()
 # Example call
 outcome, outcome_prob, matchFeatures = getPrediction(model, features, 
-                                  homeTeamID=158085, awayTeamID=274581,
+                                  homeTeamID=8558, awayTeamID=8634,
                                   season='2015/2016')
 print('Predicted Outcome: ', outcome) # 1-Home Win, 2-Draw, 3-Home Loss
 if outcome==0:
