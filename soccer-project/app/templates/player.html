@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CUNY DATA 602 Final Project</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="row container-fluid">
+	<div class="row navbar navbar-default">
+		<div class="col-sm-11">
+			<div class="navbar-header navbar-left">
+				<a class="navbar-brand" href="#">CUNY&nbsp;DATA-602&nbsp;SOCCER&nbsp;GAME&nbsp;OUTCOME&nbsp;PREDICTION</a>
+			</div>
+			<div class="navbar-header navbar-right">
+					<ul class="nav navbar-nav">
+						<li {{ home }}><a href="{{ url_for('home') }}">Home</a></li>
+                         <li {{ team }}><a href="{{ url_for('team',league=league, season=season, teamid=teamid) }}">Team</a></li>
+						<li {{ player }}><a href="#">Player</a></li>
+					</ul>
+			</div>
+            <input type="hidden" name="league" value='{{ league }}'>
+            <input type="hidden" name="season" value='{{ season }}'>
+            <input type="hidden" name="teamid" value='{{ teamid }}'>
+		</div>
+	</div>
+</div>
+<div class="row">
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-sm-4">
+			<div class="row" align="center">
+				<div class="col-sm-1">
+			
+				</div>
+				<div class="col-sm-10">
+					<div id="scoped-content">
+						<style>
+							.table-wrapper-2 {
+							display: block;
+							max-height: 690px;
+							overflow-y: auto;
+							-ms-overflow-style: -ms-autohiding-scrollbar;
+							}
+						</style>
+						<h4><small>Player Stats - {{ playerName }}</small></h4></small></h4>
+						<div class="table-wrapper-2">
+							<table class="table table-striped table-bordered table-sm">
+								<thead>
+									<tr>
+										<th>Attribute</th>
+										<th>Rating</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for key,player in playerDf.iterrows() -%}
+                                        {% if player['Attribute'] in skills -%}
+										{% if player['Attribute'] in nskills -%}
+											<tr><td>{{ player['Attribute'] }}</td><td>{{ player['Rating'] }}</td></tr>
+										{% else %}
+											<tr><td><a data-toggle="tab" href="#PG{{ playerId }}{{ loop.index }}">{{ player['Attribute'] }}</a></td><td>{{ player['Rating'] }}</td></tr>
+										{%- endif %}
+                                        {%- endif %}
+									{%- endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-1">
+				
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-4">
+			<div class="row" align="center">
+				<div class="col-sm-10">
+					<div id="scoped-content">
+						<style>
+							.table-wrapper-4 {
+								display: block;
+								max-height: 290px;
+								overflow-y: auto;
+								-ms-overflow-style: -ms-autohiding-scrollbar;
+							}
+						</style>
+						<div class="tab-content">
+							{% for key,player in playerDf.iterrows() -%}
+							{% if player['Attribute'] in skills -%}
+							{% if not player['Attribute'] in nskills -%}
+							{% if player['Attribute'] == 'Acceleration' %}
+								<div id="PG{{ playerId }}{{ loop.index }}" class="tab-pane fade in active">
+									<div class="row" align="center">
+										<h4><small>Changes Over Time</small></h4>
+										<div class="table-wrapper-4">
+											<table class="table table-striped table-bordered table-sm">
+												<thead>
+													<tr>
+														<th>Date</th>
+														<th>{{ player['Attribute'] }}</th>
+													</tr>
+												</thead>
+												<tbody>
+													{% for id, row in otherDf.iterrows() -%}
+															<tr>
+																<td class="col-sm-4">{{ row['Rating As Of'] }}</td>
+																<td class="col-sm-3">{{ row[player['Attribute']] }}</td>
+															</tr>
+													{%- endfor %}
+												</tbody>
+											</table>
+										</div>
+									</div>
+									<div class="row" align="center">
+									<img style="width:100%" id="img{{ team['playerID'] }}{{ loop.index }}" src="{{ url_for('graph_display1',playerID=playerId, playerfeature=player['Attribute'], player=playerName) }}"/>
+									</div>
+								</div>
+							{% else %}
+							<div id="PG{{ playerId }}{{ loop.index }}" class="tab-pane fade">
+									<div class="row" align="center">
+										<h4><small>Changes Over Time</small></h4>
+										<div class="table-wrapper-4">
+											<table class="table table-striped table-bordered table-sm">
+												<thead>
+													<tr>
+														<th>Date</th>
+														<th>{{ player['Attribute'] }}</th>
+													</tr>
+												</thead>
+												<tbody>
+													{% for id, row in otherDf.iterrows() -%}
+															<tr>
+																<td class="col-sm-4">{{ row['Rating As Of'] }}</td>
+																<td class="col-sm-3">{{ row[player['Attribute']] }}</td>
+															</tr>
+													{%- endfor %}
+												</tbody>
+											</table>
+										</div>
+									</div>
+									<div class="row" align="center">
+								<img style="width:100%" id="img{{ team['playerID'] }}{{ loop.index }}" src="{{ url_for('graph_display1',playerID=playerId, playerfeature=player['Attribute'], player=playerName) }}"/>
+                                    </div>
+							</div>
+							{%- endif %}
+							{%- endif %}
+							{%- endif %}
+							{%- endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+</body>
+</html>

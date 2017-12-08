@@ -1,0 +1,15 @@
+SELECT * FROM sqlite_master WHERE type = 'index';
+ 
+CREATE INDEX matchidx1 on Match (league_id, season, home_team_api_id);
+ 
+CREATE INDEX matchidx2 on Match (league_id, season, away_team_api_id);
+ 
+CREATE INDEX matchidx2 on Match (league_id, season, away_team_api_id);
+  
+CREATE INDEX team1 on Team (team_api_id);
+  
+CREATE INDEX teamA1 on Team_Attributes (team_api_id);
+  
+CREATE INDEX player1 on Player (player_api_id);
+
+CREATE INDEX playerA1 on Player_Attributes (player_api_id);
